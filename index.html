@@ -8,6 +8,7 @@
         max-width: 960px;
         margin: 0 auto;
         float: none;
+        background-color: #f8f8ff;
       }
 
       .header {
@@ -23,22 +24,92 @@
       .center {
         text-align: center;
       }
+
+      .key {
+        display: flex;
+        justify-content: space-evenly;
+        margin: 1rem;
+      }
     </style>
+    <title>Interactive Visulaization</title>
   </head>
   <body>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://d3js.org/queue.v1.min.js"></script>
     <script src="https://d3js.org/topojson.v1.min.js"></script>
     <div class="header">
+      <h1>Aid Effectiveness Visualizations</h1>
+      <h5>By Jeremy Persing & Kaitlin Arens</h5>
       <div>
-        <h1>Aid Effectiveness Visualizations</h1>
-        <h5>By Jeremy Persing & Kaitlin Arens</h5>
+        <h2>
+          What is the of percentage of people living below 50 percent of median
+          income in countries around the world?
+        </h2>
       </div>
     </div>
+
     <div id="div_template"></div>
+    <div class="key">
+      <span>
+        <svg width="30" height="10">
+          <g fill="rgb(0,0,0)">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        No data given
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#ffb2b2">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        0 - 5%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#ff7f7f">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        5 - 10%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#ff4c4c">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        10 - 15%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#ff1919">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        15 - 20%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#cc0000">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        20 - 25%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#7f0000">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        25+%
+      </span>
+    </div>
     <div id="textbox" class="center"></div>
     <script>
-      var format = d3.format(",");
+      // var format = d3.format(",");
 
       // The world map
       var margin = { top: 0, right: 0, bottom: 0, left: 0 },
@@ -48,21 +119,15 @@
       // colors
       var color = d3
         .scaleThreshold()
-        .domain([
-          10000, 100000, 500000, 1000000, 5000000, 10000000, 50000000,
-          100000000, 500000000, 1500000000,
-        ])
+        .domain([0, 5, 10, 15, 20, 25])
         .range([
-          "rgb(243,78,78)",
-          "rgb(222,235,247)",
-          "rgb(198,219,239)",
-          "rgb(158,202,225)",
-          "rgb(107,174,214)",
-          "rgb(66,146,198)",
-          "rgb(33,113,181)",
-          "rgb(215,151,156)",
-          "rgb(8,48,107)",
-          "rgb(3,19,43)",
+          "rgb(0,0,0)",
+          "#ffb2b2",
+          "#ff7f7f",
+          "#ff4c4c",
+          "#ff1919",
+          "#cc0000",
+          "#7f0000",
         ]);
 
       var path = d3.geoPath();
@@ -97,17 +162,39 @@
 
       queue()
         .defer(d3.json, "world.geojson")
-        .defer(d3.tsv, "world_population.tsv")
+        // .defer(d3.tsv, "world_population.tsv")
+        .defer(d3.csv, "poverty.csv")
         .await(ready);
 
-      function ready(error, data, population) {
-        var populationById = {};
+      // data represents the map details from world.json
+      // and poverty represents data from poverty.csv
+      function ready(error, data, poverty) {
+        var povertyById = {}; // holds average_value_Proportion of people living below 50 percent of median income (%) from poverty.csv
+        console.log("data", data);
+        console.log("poverty", poverty);
 
-        population.forEach(function (d) {
-          populationById[d.id] = +d.population;
+        poverty.forEach(function (d) {
+          let percentage = {
+            poverty:
+              d[
+                "average_value_Proportion of people living below 50 percent of median income (%)"
+              ],
+            year: d["Year"],
+          };
+
+          povertyById[d.id] = percentage;
         });
+
         data.features.forEach(function (d) {
-          d.population = populationById[d.id];
+          console.log("d", d);
+          let povertyObj = povertyById[d.id];
+          if (povertyObj) {
+            d.poverty = povertyObj.poverty;
+            d.year = povertyObj.year;
+          } else {
+            d.poverty = null;
+            d.year = "No year given";
+          }
         });
 
         svg
@@ -119,7 +206,10 @@
           .append("path")
           .attr("d", path)
           .style("fill", function (d) {
-            return color(populationById[d.id]);
+            let poverty = povertyById[d.id]?.poverty;
+            if (!poverty) poverty = -1;
+            console.log("poverty", poverty);
+            return color(poverty);
           })
           .style("stroke", "white")
           .style("stroke-width", 1.5)
@@ -129,15 +219,22 @@
           .style("stroke-width", 0.3)
           .on("mouseover", function (d) {
             let name = d.properties.name;
-            let population = format(d.population);
-            console.log(population);
-            console.log(name);
+            let poverty = d.poverty;
+            let year = d.year;
+
+            if (poverty) poverty = poverty + "%";
+            else poverty = "No data given";
+
             let string =
               "<strong>Country: </strong><span>" +
               name +
               "<br></span>" +
-              "<strong>Population: </strong><span>" +
-              population;
+              "<strong>Year: </strong><span>" +
+              year +
+              "</span>" +
+              "<br><strong>Proportion of people living below 50 " +
+              "percent of median income: </strong><span>" +
+              poverty;
             ("</span>");
             d3.select(this)
               .style("opacity", 1)
@@ -169,6 +266,5 @@
           .attr("d", path);
       }
     </script>
-    <div id="tooltip"></div>
   </body>
 </html>
