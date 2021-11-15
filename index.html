@@ -267,4 +267,236 @@
       }
     </script>
   </body>
+  <h2>
+    What is the of percentage of people living in slums around the world?
+  </h2>
+
+  
+  <div id="second_map"></div>
+    <div class="key">
+      <span>
+        <svg width="30" height="10">
+          <g fill="rgb(0,0,0)">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        No data given
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#a1f7c1">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        0 - 10%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#53e087">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        10 - 20%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#02f25a">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        20 - 30%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#06c44c">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        30 - 40%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#02732c">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        40 - 50%
+      </span>
+      <span>
+        <svg width="30" height="10">
+          <g fill="#034d1e">
+            <rect width="10" height="10" />
+          </g>
+        </svg>
+        50+%
+      </span>
+    </div>
+    <div id="textbox2" class="center"></div> 
+    <script>
+      // var format = d3.format(",");
+
+      // The world map
+      var margin = { top: 0, right: 0, bottom: 0, left: 0 },
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+      // colors
+      var color2 = d3
+        .scaleThreshold()
+        .domain([0, 10, 20, 30, 40, 50])
+        .range([
+          "rgb(0,0,0)",
+          "#a1f7c1",
+          "#53e087",
+          "#02f25a",
+          "#06c44c",
+          "#02732c",
+          "#034d1e",
+        ]);
+
+      var path = d3.geoPath();
+
+      // rendering the map
+      var svg2 = d3
+        .select("#second_map")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("class", "map");
+
+      var projection = d3
+        .geoMercator()
+        .scale(130)
+        .translate([width / 2, height / 1.5]);
+
+      var path = d3.geoPath().projection(projection);
+
+      // svg.call(tip);
+      var Tooltip = d3
+        .select("#d3_template")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("padding", "5px");
+
+      queue()
+        .defer(d3.json, "world.geojson")
+        // .defer(d3.tsv, "world_population.tsv")
+        .defer(d3.csv, "poverty.csv")
+        .await(ready);
+
+      // data represents the map details from world.json
+      // and poverty represents data from poverty.csv
+      function ready(error, data, poverty) {
+        var slumsById = {}; // holds average_value_Proportion of people living below 50 percent of median income (%) from poverty.csv
+        console.log("data", data);
+        console.log("poverty", poverty);
+
+        poverty.forEach(function (d) {
+          let percentage2 = {
+            poverty:
+              d[
+                "average_value_Population living in slums (% of urban population)"
+              ],
+            year: d["Year"],
+          };
+
+          slumsById[d.id] = percentage2;
+        });
+
+        data.features.forEach(function (d) {
+          console.log("d", d);
+          let povertyObj = slumsById[d.id];
+          if (povertyObj) {
+            d.poverty = povertyObj.poverty;
+            d.year = povertyObj.year;
+          } else {
+            d.poverty = null;
+            d.year = "No year given";
+          }
+        });
+
+        svg2
+          .append("g")
+          .attr("class", "countries")
+          .selectAll("path")
+          .data(data.features)
+          .enter()
+          .append("path")
+          .attr("d", path)
+          .style("fill", function (d) {
+            let poverty = slumsById[d.id]?.poverty;
+            if (!poverty) poverty = -1;
+            console.log("poverty", poverty);
+            return color2(poverty);
+          })
+          .style("stroke", "white")
+          .style("stroke-width", 1.5)
+          .style("opacity", 0.8)
+          // tooltips
+          .style("stroke", "white")
+          .style("stroke-width", 0.3)
+          .on("mouseover", function (d) {
+            let name = d.properties.name;
+            let poverty = d.poverty;
+            let year = d.year;
+
+            if (poverty) poverty = poverty + "%";
+            else poverty = "No data given";
+
+            let string =
+              "<strong>Country: </strong><span>" +
+              name +
+              "<br></span>" +
+              "<strong>Year: </strong><span>" +
+              year +
+              "</span>" +
+              "<br><strong>Average value of population " +
+              "living in slums: </strong><span>" +
+              poverty;
+            ("</span>");
+            d3.select(this)
+              .style("opacity", 1)
+              .style("stroke", "white")
+              .style("stroke-width", 3);
+            // tip.show(d); comment
+            d3.select("#textbox2")
+              .html("")
+              .append("text")
+              .html(() => string);
+          })
+          .on("mouseout", function (d) {
+            // tip.hide(d); comment
+
+            d3.select(this)
+              .style("opacity", 0.8)
+              .style("stroke", "white")
+              .style("stroke-width", 0.3);
+          });
+
+        svg2
+          .append("path")
+          .datum(
+            topojson.mesh(data.features, function (a, b) {
+              return a.id !== b.id;
+            })
+          )
+          .attr("class", "names")
+          .attr("d", path);
+      }
+    </script>
+  </body>
+  <h5>Design Decisions: We chose our particular visual encodings based upon the data that we had which was closely tied to countries.  The world map shows the different 
+    countries and by hovering the mouse over the desired location, the viewer can read that country's data. We believed this method was easier to interpret
+    compared to a bar chart or sunburst diagram which would have to list all the countries as well as different color schemes for each data set which would 
+    be messier.</h5>
+
+    <h5>Development Process: We researched some designs and Jeremy created the template for the graphs. We each created our own graph based on the data we were most 
+      interested in.  With this in place, we then created a color scheme to highlight different ranges in the data.  All together we spend about 6 hours in creating the project.  
+      Preparation/planning is what took the most time.</h5>
 </html>
