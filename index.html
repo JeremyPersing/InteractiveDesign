@@ -11,8 +11,12 @@
         background-color: #f8f8ff;
       }
 
-      .header {
-        margin-left: 2em;
+      .ml-1 {
+        margin-left: 1em;
+      }
+
+      .mt-3 {
+        margin-top: 3rem;
       }
 
       .names {
@@ -37,7 +41,7 @@
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://d3js.org/queue.v1.min.js"></script>
     <script src="https://d3js.org/topojson.v1.min.js"></script>
-    <div class="header">
+    <div class="ml-1">
       <h1>Aid Effectiveness Visualizations</h1>
       <h5>By Jeremy Persing & Kaitlin Arens</h5>
       <div>
@@ -266,13 +270,12 @@
           .attr("d", path);
       }
     </script>
-  </body>
-  <h2>
-    What is the of percentage of people living in slums around the world?
-  </h2>
 
-  
-  <div id="second_map"></div>
+    <h2 class="ml-1 mt-3">
+      What is the of percentage of people living in slums around the world?
+    </h2>
+
+    <div id="second_map"></div>
     <div class="key">
       <span>
         <svg width="30" height="10">
@@ -331,7 +334,7 @@
         50+%
       </span>
     </div>
-    <div id="textbox2" class="center"></div> 
+    <div id="textbox2" class="center"></div>
     <script>
       // var format = d3.format(",");
 
@@ -492,7 +495,27 @@
 
         
     </script>
+    <div class="ml-1">
+      <h5>
+        Design Decisions: We chose our particular visual encodings based upon
+        the data that we had which was closely tied to countries. The world map
+        shows the different countries and by hovering the mouse over the desired
+        location, the viewer can read that country's data. We believed this
+        method was easier to interpret compared to a bar chart or sunburst
+        diagram which would have to list all the countries as well as different
+        color schemes for each data set which would be messier.
+      </h5>
+      <h5>
+        Development Process: We researched some designs and Jeremy created the
+        template for the graphs. We each created our own graph based on the data
+        we were most interested in. With this in place, we then created a color
+        scheme to highlight different ranges in the data. All together we spend
+        about 6 hours in creating the project. Preparation/planning is what took
+        the most time.
+      </h5>
+    </div>
   </body>
+<<<<<<< HEAD
   <h5>Design Decisions: We chose our particular visual encodings based upon the data that we had which was closely tied to countries.  The world map shows the different 
     countries and by hovering the mouse over the desired location, the viewer can read that country's data. We believed this method was easier to interpret
     compared to a bar chart or sunburst diagram which would have to list all the countries as well as different color schemes for each data set which would 
@@ -943,3 +966,6 @@
       
 
 </html>
+=======
+</html>
+>>>>>>> 252879aa8a8a9fb46ad77119d1d49c71e502a202
